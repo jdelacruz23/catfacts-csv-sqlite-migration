@@ -12,6 +12,11 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -122,7 +127,22 @@ public class App {
         }
 
         /** GET /facts */
-        void getAllFacts(HttpExchange exchange) throws IOException {
+        void getAllFacts(HttpExchange exchange) throws IOException, SQLException{
+            List<CatFact> results = new ArrayList<>();
+
+            String sql = "SELECT id, fact FROM facts ORDER BY id";
+
+            try(Connection conn = DriverManager.getConnection(DB_URL);
+                PreparedStatement pstmt = conn.prepareStatement(sql);
+                ResultSet rs = pstmt.executeQuery()){
+
+                while (rs.next()) {
+                    int id = rs.getInt("id");
+                    String fact = rs.getString("fact");
+
+                    results.add(new CatFact(id, fact));
+                }
+            }
             sendJson(exchange, 200, facts);
         }
 
