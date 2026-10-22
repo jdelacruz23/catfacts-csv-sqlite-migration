@@ -11,7 +11,6 @@ import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -55,11 +54,6 @@ public class App {
         }
     }
 
-    /** Appends one fact to the end of facts.csv as "id,fact". */
-    static void appendToCsv(CatFact fact) throws IOException {
-        Files.writeString(CSV_FILE, fact.id() + "," + fact.fact() + "\n",
-                StandardCharsets.UTF_8, StandardOpenOption.APPEND);
-    }
 
     static final Gson gson = new GsonBuilder()
             .setPrettyPrinting()
@@ -67,8 +61,6 @@ public class App {
             .create();
 
     public static void main(String[] args) throws IOException {
-        loadFromCsv();
-        System.out.println("Loaded " + facts.size() + " facts from " + CSV_FILE);
 
         HttpServer server = HttpServer.create(new InetSocketAddress(PORT), 0);
         server.createContext("/facts", new FactsHandler());
