@@ -149,13 +149,22 @@ public class App {
         /** GET /facts/{id} */
         void getFactById(HttpExchange exchange, int id) throws IOException, SQLException{
             String sql = "SELECT id, fact FROM facts WHERE id = ?";
-            for (CatFact fact : facts) {
-                if (fact.id() == id) {
-                    sendJson(exchange, 200, fact);
-                    return;
+            try(Connection conn = DriverManager.getConnection(DB_URL);
+                PreparedStatement pstmt = conn.prepareStatement(sql)){
+                pstmt.setInt(1, id);
+                
+                try (ResultSet rs = pstmt.executeQuery()) {
+
+                if (rs.next()) {
+                    int factId = rs.getInt("id");
+                    String fact = rs.getString("fact");
+                    sendJson(exchange, 200, new CatFact(factId, fact));
+                } 
+                else {
+                sendJson(exchange, 404, "Fact not found");
+                    }    
                 }
             }
-            sendJson(exchange, 404, new ErrorBody("no fact with id " + id));
         }
 
         /** POST /facts */
