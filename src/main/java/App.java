@@ -90,7 +90,7 @@ public class App {
         }
 
         /** Decides which endpoint a request is for. */
-        void route(HttpExchange exchange) throws IOException {
+        void route(HttpExchange exchange) throws IOException, SQLException {
             String method = exchange.getRequestMethod();
             String path = exchange.getRequestURI().getPath();
 
@@ -147,7 +147,8 @@ public class App {
         }
 
         /** GET /facts/{id} */
-        void getFactById(HttpExchange exchange, int id) throws IOException {
+        void getFactById(HttpExchange exchange, int id) throws IOException, SQLException{
+            String sql = "SELECT id, fact FROM facts WHERE id = ?";
             for (CatFact fact : facts) {
                 if (fact.id() == id) {
                     sendJson(exchange, 200, fact);
