@@ -143,32 +143,35 @@ public class App {
                     results.add(new CatFact(id, fact));
                 }
             }
-            sendJson(exchange, 200, facts);
+            sendJson(exchange, 200, results);
         }
 
         /** GET /facts/{id} */
-        void getFactById(HttpExchange exchange, int id) throws IOException, SQLException{
+        void getFactById(HttpExchange exchange, int id) throws IOException, SQLException {
+
             String sql = "SELECT id, fact FROM facts WHERE id = ?";
-            try(Connection conn = DriverManager.getConnection(DB_URL);
-                PreparedStatement pstmt = conn.prepareStatement(sql)){
+
+            try (Connection conn = DriverManager.getConnection(DB_URL);
+                PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
                 pstmt.setInt(1, id);
-                
+
                 try (ResultSet rs = pstmt.executeQuery()) {
 
-                if (rs.next()) {
-                    int factId = rs.getInt("id");
-                    String fact = rs.getString("fact");
-                    sendJson(exchange, 200, new CatFact(factId, fact));
-                } 
-                else {
-                sendJson(exchange, 404, "Fact not found");
-                    }    
+                    if (rs.next()) {
+                        int factId = rs.getInt("id");
+                        String fact = rs.getString("fact");
+
+                        sendJson(exchange, 200, new CatFact(factId, fact));
+                    } else {
+                        sendJson(exchange, 404, new ErrorBody("no fact with id " + id));
+                    }
                 }
             }
         }
-
+        
         /** POST /facts */
-        void createFact(HttpExchange exchange) throws IOException {
+        void createFact(HttpExchange exchange) throws IOException, SQLException{
             String body = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
 
             NewFact input;
@@ -188,14 +191,24 @@ public class App {
                 sendJson(exchange, 400, new ErrorBody("\"fact\" must be a single line"));
                 return;
             }
+            String sql = "INSERT INTO facts (fact) VALUES (?) RETURNING id";
 
-            CatFact created = new CatFact(nextId, text);
-            appendToCsv(created);
-            facts.add(created);
-            nextId++;
+            try (Connection conn = DriverManager.getConnection(DB_URL);
+                PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
-            exchange.getResponseHeaders().set("Location", "/facts/" + created.id());
-            sendJson(exchange, 201, created);
+                pstmt.setString(1, text);
+
+                try (ResultSet rs = pstmt.executeQuery()) {
+                    if (rs.next()) {
+                        int id = rs.getInt("id");
+                        CatFact created = new CatFact(id, text);
+
+                        exchange.getResponseHeaders().set("Location", "/facts/" + created.id());
+                        sendJson(exchange, 201, created);
+                    }
+                }
+            }
+
         }
 
         // ---- Helper ------------------------------------------------------
