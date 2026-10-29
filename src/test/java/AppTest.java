@@ -6,10 +6,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+// for some reason, this is not being used, lol
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
+// for some reason, this is not being used, lol same with this, IDE determines that it's not being used.
 import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -139,6 +141,7 @@ public class AppTest {
     }
     //17. Calling loadFromCsv twice does not give you twice as many facts.
     // Test fail: expected [11] but was [20]
+    // this won't work without facts.csv.bak renamed to facts.csv
     @Test
     void testLoadFromCsvTwice() throws Exception {
         App.facts.clear();
@@ -146,7 +149,7 @@ public class AppTest {
         App.loadFromCsv();
         assertEquals(11, App.facts.size());
     }
-
+    // this won't work without facts.csv.bak renamed to facts.csv
     @Test
     void getAllFactsReturnsEveryRowInIdOrder() throws Exception {
         Path db = tempDir.resolve("test.db");
@@ -179,6 +182,7 @@ public class AppTest {
         Optional<App.CatFact> found = new App.FactsHandler().findFactById(url, 2);
 
         assertTrue(found.isPresent());
+        //error: expected [CatFact[id=2, fact=Cats love to sleep]] but was [CatFact[id=2, fact=Cats sleep for about 70 percent of their lives]]
         assertEquals(new App.CatFact(2, "Cats love to sleep"), found.get());
     }
     //The missing case.
