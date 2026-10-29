@@ -56,4 +56,37 @@ public class AppTest {
         assertNotNull(emptyFact);
         assertEquals("", emptyFact.fact());
     }
+    //9.Serializing a CatFact produces JSON containing both of its fields.
+    @Test
+    void testCatFactToJson(){
+    App.CatFact catJson = new App.CatFact(1, "Cats are cute.");
+
+    String json = App.gson.toJson(catJson);
+
+    assertTrue(json.contains("\"id\": 1"));
+    assertTrue(json.contains("\"fact\": \"Cats are cute.\""));
+    }
+    //10. A JSON request body deserializes into a NewFact 
+    @Test
+    void testDeserializeNewFact(){
+        String json = "{\"fact\": \"Cats are cute.\"}";
+        App.NewFact newFact = App.gson.fromJson(json, App.NewFact.class);
+        assertEquals("Cats are cute.", newFact.fact());
+    }
+    //11. An apostrophe comes out of Gson as an apostrophe
+    @Test
+    void testApostropheInCatFact(){
+        App.CatFact apostropheFact = new App.CatFact(1, "Cats aren't dogs.");
+        String json = App.gson.toJson(apostropheFact);
+        assertTrue(json.contains("aren't"));
+        assertFalse(json.contains("\\u0027"));
+    }
+    //12.  A fact containing commas survives being serialized and deserialized.
+    @Test 
+    void testToJsonFromJson(){
+        App.CatFact toFromJsonFact = new App.CatFact(9, "Cats, unlike dogs, cannot taste sweetness");
+        String toJson = App.gson.toJson(toFromJsonFact);
+        App.CatFact resultJson = App.gson.fromJson(toJson, App.CatFact.class);
+        assertEquals(toFromJsonFact, resultJson);
+    }
 }
