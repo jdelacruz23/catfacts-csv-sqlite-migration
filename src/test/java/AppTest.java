@@ -4,13 +4,22 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import static org.junit.jupiter.api.Assertions.*;
 
+import java.nio.file.Path;
 import java.util.ArrayList;
+import java.nio.file.Path;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.Statement;
 import java.util.List;
 
-import org.junit.jupiter.api.Test;
-
 public class AppTest {
+    @TempDir
+    Path tempDir;
+    
     @Test
     //2. CatFact test Record keeps the data you passed in
     void testCatFact() {
@@ -135,5 +144,21 @@ public class AppTest {
         App.loadFromCsv();
         App.loadFromCsv();
         assertEquals(11, App.facts.size());
+    }
+
+    @Test
+    void getAllFactsReturnsEveryRowInIdOrder() throws Exception {
+        Path db = tempDir.resolve("test.db");
+        String url = "jdbc:sqlite:" + db;
+        try (Connection c = DriverManager.getConnection(url);
+            Statement s = c.createStatement()) {
+            s.executeUpdate("CREATE TABLE facts (id INTEGER PRIMARY KEY AUTOINCREMENT, fact TEXT NOT NULL)");
+            s.executeUpdate("INSERT INTO facts (id, fact) VALUES (1, 'Cats purr')");
+            s.executeUpdate("INSERT INTO facts (id, fact) VALUES (2, 'Cats, oddly, cannot taste sweetness')");
+        }
+        List<App.CatFact> facts = new App.FactsHandler().getAllFacts(url);        
+        assertEquals(2, facts.size());
+        assertEquals(1, facts.get(0).id());
+        assertEquals("Cats, oddly, cannot taste sweetness", facts.get(1).fact());
     }
 }
