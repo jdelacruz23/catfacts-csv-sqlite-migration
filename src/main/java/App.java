@@ -18,6 +18,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Cat Facts API, backed by a CSV file.
@@ -112,11 +113,12 @@ public class App {
                 return;
             }
             if (method.equals("GET")) {
-                getFactById(exchange, id);
-            } else if (method.equals("DELETE")) {
-                deleteFact(exchange, id);
-            } else {
-                sendJson(exchange, 405, new ErrorBody("method not allowed"));
+                Optional<CatFact> found = findFactById(DB_URL, id);
+                if (found.isPresent()) {
+                    sendJson(exchange, 200, found.get());
+                } else {
+                    sendJson(exchange, 404, new ErrorBody("no fact with id " + id));
+                }
             }
         }
 
@@ -141,7 +143,7 @@ public class App {
         }
 
         /** GET /facts/{id} */
-        void getFactById(HttpExchange exchange, int id) throws IOException, SQLException {
+        Optional<CatFact> findFactById(String dbUrl, int id) throws SQLException {
 
             String sql = "SELECT id, fact FROM facts WHERE id = ?";
 
@@ -156,9 +158,9 @@ public class App {
                         int factId = rs.getInt("id");
                         String fact = rs.getString("fact");
 
-                        sendJson(exchange, 200, new CatFact(factId, fact));
+                        return Optional.of(new CatFact(factId, fact));
                     } else {
-                        sendJson(exchange, 404, new ErrorBody("no fact with id " + id));
+                        return Optional.empty();
                     }
                 }
             }

@@ -15,11 +15,12 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.Statement;
 import java.util.List;
+import java.util.Optional;
 
 public class AppTest {
     @TempDir
     Path tempDir;
-    
+
     @Test
     //2. CatFact test Record keeps the data you passed in
     void testCatFact() {
@@ -160,5 +161,41 @@ public class AppTest {
         assertEquals(2, facts.size());
         assertEquals(1, facts.get(0).id());
         assertEquals("Cats, oddly, cannot taste sweetness", facts.get(1).fact());
+    }
+    //two tests from Seams assignments:
+    //The found case.
+    @Test
+    void testFindFactByIdFound() throws Exception {
+        Path db = tempDir.resolve("test.db");
+        String url = "jdbc:sqlite:" + db;
+
+        try (Connection c = DriverManager.getConnection(url);
+            Statement s = c.createStatement()) {
+            s.executeUpdate("CREATE TABLE facts (id INTEGER PRIMARY KEY AUTOINCREMENT, fact TEXT NOT NULL)");
+            s.executeUpdate("INSERT INTO facts (id, fact) VALUES (1, 'Cats purr')");
+            s.executeUpdate("INSERT INTO facts (id, fact) VALUES (2, 'Cats love to sleep')");
+        }
+
+        Optional<App.CatFact> found = new App.FactsHandler().findFactById(url, 2);
+
+        assertTrue(found.isPresent());
+        assertEquals(new App.CatFact(2, "Cats love to sleep"), found.get());
+    }
+    //The missing case.
+    @Test
+    void testFindFactByIdMissing() throws Exception {
+        Path db = tempDir.resolve("missing.db");
+        String url = "jdbc:sqlite:" + db;
+
+        try (Connection c = DriverManager.getConnection(url);
+            Statement s = c.createStatement()) {
+            s.executeUpdate("CREATE TABLE facts (id INTEGER PRIMARY KEY AUTOINCREMENT, fact TEXT NOT NULL)");
+            s.executeUpdate("INSERT INTO facts (id, fact) VALUES (1, 'Cats purr')");
+            s.executeUpdate("INSERT INTO facts (id, fact) VALUES (2, 'Cats love to sleep')");
+        }
+
+        Optional<App.CatFact> found = new App.FactsHandler().findFactById(url, 99);
+
+        assertTrue(found.isEmpty());
     }
 }
