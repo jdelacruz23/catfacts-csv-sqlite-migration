@@ -1,7 +1,14 @@
-import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+
 import java.util.ArrayList;
 import java.util.List;
+
+import org.junit.jupiter.api.Test;
 
 public class AppTest {
     @Test
@@ -88,5 +95,45 @@ public class AppTest {
         String toJson = App.gson.toJson(toFromJsonFact);
         App.CatFact resultJson = App.gson.fromJson(toJson, App.CatFact.class);
         assertEquals(toFromJsonFact, resultJson);
+    }
+    //13. loadFromCsv reads every row in the file. Assert that App.facts has as many entries as facts.csv
+    @Test
+    void testLoadFromCsv() throws Exception {
+        App.loadFromCsv();
+        assertEquals(10, App.facts.size());
+    }
+    // 14. A fact containing commas is stored whole, not truncated.
+    @Test
+    void testLoadFromCsvCommas() throws Exception {
+        App.loadFromCsv();
+        for (App.CatFact cat : App.facts) {
+            if (cat.id() == 9) {
+                assertEquals("Cats, like people, tend to favor one paw over the other", cat.fact());
+                return;
+            }
+        }
+        fail("CatFact with id 9 not found");
+    }
+    // 15. Ids come from the file, they are not generated
+    @Test
+    void testCsvFirstId() throws Exception {
+        App.loadFromCsv();
+
+        assertEquals(1, App.facts.get(0).id());
+    }
+    //16. nextId ends up one past the highest id in the file.
+    @Test
+    void testNextId() throws Exception {
+        App.loadFromCsv();
+        assertEquals(11, App.nextId);
+    }
+    //17. Calling loadFromCsv twice does not give you twice as many facts.
+    // Test fail: expected [11] but was [20]
+    @Test
+    void testLoadFromCsvTwice() throws Exception {
+        App.facts.clear();
+        App.loadFromCsv();
+        App.loadFromCsv();
+        assertEquals(11, App.facts.size());
     }
 }
